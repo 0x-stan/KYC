@@ -1,6 +1,6 @@
 import "@typechain/hardhat";
 import "@nomiclabs/hardhat-ethers";
-import { ethers } from "hardhat";
+import { ethers,upgrades } from "hardhat";
 import { Signer, Contract, utils, BigNumber } from "ethers";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
@@ -19,8 +19,11 @@ describe("KYC Ownable", function () {
     [owner, other] = await ethers.getSigners();
     ownerAddress = await owner.getAddress();
     otherAddress = await other.getAddress();
-    const Ownable = await ethers.getContractFactory("KYC");
-    ownable = await Ownable.deploy();
+
+    // Deploying
+    const KYC = await ethers.getContractFactory("KYC");
+    ownable = await upgrades.deployProxy(KYC);
+    await ownable.deployed();
   });
 
   it("has an owner", async function () {
@@ -30,9 +33,7 @@ describe("KYC Ownable", function () {
   describe("transfer ownership", function () {
     it("changes owner after transfer", async function () {
       await expect(
-        ownable.transferOwnership(otherAddress, {
-          from: ownerAddress,
-        })
+        ownable.transferOwnership(otherAddress)
       ).to.emit(ownable, 'OwnershipTransferred')
 
       expect(await ownable.owner()).to.equal(otherAddress);

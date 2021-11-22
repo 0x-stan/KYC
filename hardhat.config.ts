@@ -1,5 +1,6 @@
 import '@nomiclabs/hardhat-waffle';
 import '@nomiclabs/hardhat-web3';
+import '@openzeppelin/hardhat-upgrades';
 import dotenv from 'dotenv';
 import { GAS_PRICE, ONE_ETH } from './utils/constants'
 

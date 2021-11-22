@@ -26,6 +26,8 @@
     "test": "npx hardhat test"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^4.3.3"
+    "@openzeppelin/contracts": "^4.3.3",
+    "@openzeppelin/contracts-upgradeable": "^4.3.3",
+    "@openzeppelin/hardhat-upgrades": "^1.12.0"
   }
 }

@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-contract KYC is Ownable {
+contract KYC is OwnableUpgradeable {
     // userData is a bitmap:
     //   0-29  placeholder
     //   30-31 user's permission: 0 no permission, 1 normal member, ...
@@ -12,7 +12,9 @@ contract KYC is Ownable {
     uint256 public usersSize;
     uint256 constant PERMISSION_MASK = 0x000000000000000000000000000000FF;
 
-    constructor() {}
+    function initialize() initializer public {
+        __Ownable_init();
+    }
 
     // function getUserData(address user) external view returns (uint256) {
     //     return userDatas[user];
