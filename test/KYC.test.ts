@@ -10,62 +10,59 @@ chai.use(solidity);
 const { expect } = chai;
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
-describe("KYC Ownable", function () {
-  let owner: Signer, other: Signer;
-  let ownerAddress: string, otherAddress: string;
-  let ownable: Contract;
+describe("KYC userData", function () {
+  let owner: Signer, other: Signer, other2: Signer;
+  let ownerAddress: string, otherAddress: string, otherAddress2: string;
+  let kyc: Contract;
 
   beforeEach(async function () {
-    [owner, other] = await ethers.getSigners();
+    [owner, other, other2] = await ethers.getSigners();
     ownerAddress = await owner.getAddress();
     otherAddress = await other.getAddress();
-    const Ownable = await ethers.getContractFactory("KYC");
-    ownable = await Ownable.deploy();
+    otherAddress2 = await other2.getAddress();
+    const KYC = await ethers.getContractFactory("KYC");
+    kyc = await KYC.deploy();
   });
 
-  it("has an owner", async function () {
-    expect(await ownable.owner()).to.equal(ownerAddress);
-  });
-
-  describe("transfer ownership", function () {
-    it("changes owner after transfer", async function () {
-      await expect(
-        ownable.transferOwnership(otherAddress, {
-          from: ownerAddress,
-        })
-      ).to.emit(ownable, 'OwnershipTransferred')
-
-      expect(await ownable.owner()).to.equal(otherAddress);
+  describe("getUserPermission()", function () {
+    it("return 0 before admin set it", async function () {
+      expect(await kyc.getUserPermission(otherAddress)).to.equals(0);
     });
 
-    it("prevents non-owners from transferring", async function () {
-      await expect(
-        ownable.connect(other).transferOwnership(otherAddress)
-      ).to.revertedWith("Ownable: caller is not the owner");
-    });
+    it("return value after admin set permission", async function () {
+      await kyc.setUserPermisstion(otherAddress, 1);
+      expect(await kyc.getUserPermission(otherAddress)).to.equals(1);
 
-    it("guards ownership against stuck state", async function () {
-      await expect(
-        ownable.transferOwnership(ZERO_ADDRESS, { from: ownerAddress })
-      ).to.revertedWith("Ownable: new owner is the zero address");
+      await kyc.setUserPermisstion(otherAddress, 2);
+      expect(await kyc.getUserPermission(otherAddress)).to.equals(2);
     });
   });
 
-  describe("renounce ownership", function () {
-    it("loses owner after renouncement", async function () {
-      await expect(
-        ownable.renounceOwnership({
-          from: ownerAddress,
-        })
-      ).to.emit(ownable, 'OwnershipTransferred');
-
-      expect(await ownable.owner()).to.equal(ZERO_ADDRESS);
+  describe("usersSize()", function () {
+    it("return 0 before admin setUser", async function () {
+      expect(await kyc.usersSize()).to.equals(0);
     });
 
-    it("prevents non-owners from renouncement", async function () {
+    it("return right user's num when userData changing", async function () {
+      await kyc.setUserPermisstion(otherAddress, 1);
+      expect(await kyc.usersSize()).to.equals(1);
+
+      await kyc.setUserPermisstion(otherAddress2, 1);
+      expect(await kyc.usersSize()).to.equals(2);
+
+      await kyc.setUserPermisstion(otherAddress2, 0);
+      expect(await kyc.usersSize()).to.equals(1);
+
+      await kyc.setUserPermisstion(otherAddress, 0);
+      expect(await kyc.usersSize()).to.equals(0);
+    });
+  });
+
+  describe("setUserPermission()", function () {
+    it("revert with PERMISSION_TOO_LARGE when set permission > 0xFF", async function () {
       await expect(
-        ownable.connect(other).renounceOwnership()
-      ).to.revertedWith("Ownable: caller is not the owner");
+        kyc.setUserPermisstion(otherAddress, Number("0x01FF"))
+      ).to.revertedWith("PERMISSION_TOO_LARGE");
     });
   });
 });
